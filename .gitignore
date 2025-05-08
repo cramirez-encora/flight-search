@@ -8,3 +8,6 @@
 # Gradle
 .gradle/
 build/
+
+# Node
+node_modules
