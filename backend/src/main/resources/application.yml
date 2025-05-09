@@ -1,0 +1,6 @@
+amadeus:
+  auth:
+    url: https://test.api.amadeus.com/v1/security/oauth2/token
+  client:
+    id: ${AMADEUS_API_KEY}
+    secret: ${AMADEUS_API_SECRET}
