@@ -2,6 +2,7 @@ package com.flightsearch.backend.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 
 @Configuration
 @ConfigurationProperties(prefix = "amadeus")
@@ -24,5 +25,12 @@ public class AmadeusConfig {
 
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
+    }
+
+    @Value("${amadeus.api.airport-search-url}")
+    private String airportSearchUrl;
+
+    public String getAirportSearchUrl() {
+        return airportSearchUrl;
     }
 }
