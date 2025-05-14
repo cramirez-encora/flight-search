@@ -4,3 +4,5 @@ amadeus:
   client:
     id: ${AMADEUS_API_KEY}
     secret: ${AMADEUS_API_SECRET}
+  api:
+    airport-search-url: https://test.api.amadeus.com/v1/reference-data/locations

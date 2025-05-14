@@ -15,6 +15,6 @@ public class AuthTestController {
 
     @GetMapping("/api/token")
     public String getToken() {
-        return authService.fetchAccessToken();
+        return authService.getAccessToken();
     }
 }
