@@ -1,6 +1,7 @@
 package com.flightsearch.backend.service;
 
 import com.flightsearch.backend.model.TokenResponse;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -8,6 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+
+import java.time.Instant;
+import java.util.Map;
 
 @Service
 public class AmadeusAuthService {
@@ -22,25 +26,51 @@ public class AmadeusAuthService {
     private String authUrl;
 
 
-    public String fetchAccessToken() {
-        RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = new RestTemplate();
 
+    private String accessToken;
+    private Instant tokenExpiration;
+
+    @PostConstruct
+    public void init() {
+        getAccessToken();
+    }
+
+    public synchronized String getAccessToken() {
+        if (accessToken == null || tokenExpired()) {
+            requestNewToken();
+        }
+        return accessToken;
+    }
+
+    private boolean tokenExpired() {
+        return tokenExpiration == null || Instant.now().isAfter(tokenExpiration);
+    }
+
+    private void requestNewToken() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("grant_type", "client_credentials");
-        body.add("client_id", clientId);
-        body.add("client_secret", clientSecret);
+        String body = "grant_type=client_credentials"
+                + "&client_id=" + clientId
+                + "&client_secret=" + clientSecret;
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
 
-        ResponseEntity<TokenResponse> response = restTemplate.postForEntity(authUrl, request, TokenResponse.class);
+        ResponseEntity<Map> response = restTemplate.exchange(
+                authUrl,
+                HttpMethod.POST,
+                entity,
+                Map.class
+        );
 
-        if(response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-            return response.getBody().getAccessToken();
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            Map<String, Object> responseBody = response.getBody();
+            this.accessToken = (String) responseBody.get("access_token");
+            Integer expiresIn = (Integer) responseBody.get("expires_in");
+            this.tokenExpiration = Instant.now().plusSeconds(expiresIn - 60);
+        } else {
+            throw new RuntimeException("Failed to obtain access token from Amadeus");
         }
-
-        throw new RuntimeException("Could not fetch access token");
     }
 }
