@@ -1,14 +1,14 @@
 package com.flightsearch.backend.model;
 
-public class Airport {
+public class AirportResponse {
     private String name;
-    private String aitacode;
+    private String iataCode;
     private String city;
     private String country;
 
-    public Airport(String name, String aitacode, String city, String country) {
+    public AirportResponse(String name, String iataCode, String city, String country) {
         this.name = name;
-        this.aitacode = aitacode;
+        this.iataCode = iataCode;
         this.city = city;
         this.country = country;
     }
@@ -17,8 +17,8 @@ public class Airport {
         return name;
     }
 
-    public String getAitacode() {
-        return aitacode;
+    public String getIataCode() {
+        return iataCode;
     }
 
     public String getCity() {
