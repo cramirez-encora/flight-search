@@ -6,3 +6,4 @@ amadeus:
     secret: ${AMADEUS_API_SECRET}
   api:
     airport-search-url: https://test.api.amadeus.com/v1/reference-data/locations
+    flight-search-url: https://test.api.amadeus.com/v2/shopping/flight-offers
