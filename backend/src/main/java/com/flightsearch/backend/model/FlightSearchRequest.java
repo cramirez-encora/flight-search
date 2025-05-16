@@ -1,16 +1,32 @@
 package com.flightsearch.backend.model;
 
+import jakarta.validation.constraints.*;
+import org.springframework.cglib.core.Local;
+
+import java.time.LocalDate;
+
 public class FlightSearchRequest {
+    @NotBlank
     private String originLocationCode;
+
+    @NotBlank
     private String destinationLocationCode;
-    private String departureDate;
+
+    @NotNull
+    @FutureOrPresent(message = "Departure date must be today or in the future")
+    private LocalDate departureDate;
+
+    @Min(value = 1, message = "There must be at least one adult")
     private int adults;
+
+    @Pattern(regexp = "USD|MXN|EUR", message = "Currency must be USD, MXN or EUR")
     private String currencyCode;
+
     private boolean nonStop;
 
     public FlightSearchRequest() {}
 
-    public FlightSearchRequest(String originLocationCode, String destinationLocationCode, String departureDate,
+    public FlightSearchRequest(String originLocationCode, String destinationLocationCode, LocalDate departureDate,
                                   int adults, String currencyCode, boolean nonStop) {
         this.originLocationCode = originLocationCode;
         this.destinationLocationCode = destinationLocationCode;
@@ -36,10 +52,10 @@ public class FlightSearchRequest {
     }
 
 
-    public String getDepartureDate() {
+    public LocalDate getDepartureDate() {
         return departureDate;
     }
-    public void setDepartureDate(String departureDate) {
+    public void setDepartureDate(LocalDate departureDate) {
         this.departureDate = departureDate;
     }
 
