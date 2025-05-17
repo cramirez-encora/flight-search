@@ -2,6 +2,7 @@ package com.flightsearch.backend.model;
 
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.Objects;
 
 public class FlightSearchRequest {
     @NotBlank
@@ -44,6 +45,41 @@ public class FlightSearchRequest {
         this.sortBy = sortBy;
         this.sortOrder = sortOrder;
     }
+
+    @Override
+    public String toString() {
+        return originLocationCode + "-" +
+                destinationLocationCode + "-" +
+                departureDate + "-" +
+                (returnDate != null ? returnDate : "null") + "-" +
+                adults + "-" +
+                nonStop + "-" +
+                currencyCode + "-" +
+                sortBy + "-" +
+                sortOrder;
+    }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FlightSearchRequest that = (FlightSearchRequest) o;
+        return adults == that.adults &&
+                nonStop == that.nonStop &&
+                Objects.equals(originLocationCode, that.originLocationCode) &&
+                Objects.equals(destinationLocationCode, that.destinationLocationCode) &&
+                Objects.equals(departureDate, that.departureDate) &&
+                Objects.equals(returnDate, that.returnDate) &&
+                Objects.equals(currencyCode, that.currencyCode) &&
+                Objects.equals(sortBy, that.sortBy) &&
+                Objects.equals(sortOrder, that.sortOrder);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(originLocationCode, destinationLocationCode, departureDate, returnDate,
+                adults, nonStop, currencyCode, sortBy, sortOrder);
+    }
+
 
     // Getters and setters
 

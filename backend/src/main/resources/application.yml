@@ -12,3 +12,7 @@ amadeus:
 server:
   error:
     include-stacktrace: never
+
+spring:
+  cache:
+    type: simple

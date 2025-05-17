@@ -6,6 +6,8 @@ import com.flightsearch.backend.model.FlightSearchRequest;
 import com.flightsearch.backend.model.FlightSearchResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -35,6 +37,8 @@ public class FlightSearchService {
         this.airlineService = airlineService;
     }
 
+
+    @Cacheable(value = "flightSearchCache", key = "#request.toString()")
     public List<FlightSearchResponse> searchFlights(FlightSearchRequest request) {
         String token = authService.getAccessToken();
         String url = buildFlightSearchUrl(request);
