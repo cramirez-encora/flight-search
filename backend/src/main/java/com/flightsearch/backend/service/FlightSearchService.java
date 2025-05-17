@@ -4,15 +4,14 @@ import com.flightsearch.backend.config.AmadeusConfig;
 import com.flightsearch.backend.model.AirportResponse;
 import com.flightsearch.backend.model.FlightSearchRequest;
 import com.flightsearch.backend.model.FlightSearchResponse;
-import com.flightsearch.backend.service.AmadeusAuthService;
-import com.flightsearch.backend.service.AirlineService;
-import com.flightsearch.backend.service.AirportService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.*;
 
 @Service
@@ -54,7 +53,9 @@ public class FlightSearchService {
             );
 
             JsonNode root = objectMapper.readTree(response.getBody());
-            return parseFlightResults(root, request);
+            List<FlightSearchResponse> results = parseFlightResults(root, request);
+            sortFlightResults(results, request.getSortBy(), request.getSortOrder());
+            return results;
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch or parse flight search response: " + e.getMessage(), e);
@@ -109,37 +110,66 @@ public class FlightSearchService {
 
                 String operatingName = airlineService.getAirlineName(operatingCode).orElse(operatingCode);
 
-                String duration = formatDuration(itinerary.get("duration").asText());
+                String isoDuration = itinerary.get("duration").asText();
+                String formattedDuration = formatDuration(isoDuration);
                 int stops = segments.size() - 1;
 
                 String pricePerTraveler = offer.get("price").get("total").asText();
                 double total = Double.parseDouble(pricePerTraveler) * request.getAdults();
                 String totalPrice = String.format("%.2f", total);
 
-                results.add(new FlightSearchResponse(
+                FlightSearchResponse flight = new FlightSearchResponse(
                         departureTime, arrivalTime,
                         departureName, departureAirportCode,
                         arrivalName, arrivalAirportCode,
                         airlineName, airlineCode,
                         operatingCode.equals(airlineCode) ? null : operatingName,
                         operatingCode.equals(airlineCode) ? null : operatingCode,
-                        duration, stops,
+                        formattedDuration, stops,
                         totalPrice, pricePerTraveler
-                ));
+                );
+
+                results.add(flight);
             } catch (Exception e) {
                 // Skip malformed entries
             }
-
-
         }
         return results;
     }
+
     private String formatDuration(String isoDuration) {
-        // Converts ISO 8601 duration like PT4H45M to 4h 45m
-        String duration = isoDuration.replace("PT", "")
-                .replace("H", "h ")
-                .replace("M", "m")
-                .trim();
-        return duration.isEmpty() ? "0m" : duration;
+        Duration duration = Duration.parse(isoDuration);
+        long hours = duration.toHours();
+        long minutes = duration.minusHours(hours).toMinutes();
+        return (hours > 0 ? hours + "h " : "") + (minutes > 0 ? minutes + "m" : "").trim();
+    }
+
+    private long parseDurationToMinutes(String durationStr) {
+        long minutes = 0;
+        String[] parts = durationStr.split(" ");
+        for (String part : parts) {
+            if (part.endsWith("h")) {
+                minutes += Integer.parseInt(part.replace("h", "")) * 60;
+            } else if (part.endsWith("m")) {
+                minutes += Integer.parseInt(part.replace("m", ""));
+            }
+        }
+        return minutes;
+    }
+
+    private void sortFlightResults(List<FlightSearchResponse> results, String sortBy, String sortOrder) {
+        Comparator<FlightSearchResponse> comparator;
+
+        if ("duration".equalsIgnoreCase(sortBy)) {
+            comparator = Comparator.comparing(f -> parseDurationToMinutes(f.getDuration()));
+        } else {
+            comparator = Comparator.comparing(f -> new BigDecimal(f.getTotalPrice()));
+        }
+
+        if ("desc".equalsIgnoreCase(sortOrder)) {
+            comparator = comparator.reversed();
+        }
+
+        results.sort(comparator);
     }
 }

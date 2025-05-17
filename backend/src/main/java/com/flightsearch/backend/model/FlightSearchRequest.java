@@ -25,6 +25,10 @@ public class FlightSearchRequest {
 
     private boolean nonStop;
 
+    private String sortBy;
+
+    private String sortOrder;
+
     // Constructors, Getters, Setters
     public FlightSearchRequest() {}
 
@@ -37,6 +41,8 @@ public class FlightSearchRequest {
         this.adults = adults;
         this.currencyCode = currencyCode;
         this.nonStop = nonStop;
+        this.sortBy = sortBy;
+        this.sortOrder = sortOrder;
     }
 
     // Getters and setters
@@ -95,5 +101,16 @@ public class FlightSearchRequest {
 
     public void setNonStop(boolean nonStop) {
         this.nonStop = nonStop;
+    }
+
+    public String getSortBy() {
+        return sortBy;
+    }
+    public void setSortBy(String sortBy) {
+        this.sortBy = sortBy;
+    }
+
+    public String getSortOrder() {
+        return sortOrder;
     }
 }
