@@ -33,4 +33,11 @@ public class AmadeusConfig {
     public String getAirportSearchUrl() {
         return airportSearchUrl;
     }
+
+    @Value("${amadeus.api.flight-search-url}")
+    private String flightSearchUrl;
+
+    public String getFlightSearchUrl() {
+        return flightSearchUrl;
+    }
 }
