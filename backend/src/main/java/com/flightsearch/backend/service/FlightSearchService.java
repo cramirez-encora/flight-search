@@ -2,12 +2,12 @@ package com.flightsearch.backend.service;
 
 import com.flightsearch.backend.config.AmadeusConfig;
 import com.flightsearch.backend.model.AirportResponse;
+import com.flightsearch.backend.model.FlightDetailsResponse;
 import com.flightsearch.backend.model.FlightSearchRequest;
 import com.flightsearch.backend.model.FlightSearchResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class FlightSearchService {
@@ -25,6 +26,8 @@ public class FlightSearchService {
     private final AmadeusAuthService authService;
     private final AirportService airportService;
     private final AirlineService airlineService;
+
+    private final Map<UUID, JsonNode> flightDetailsCache = new ConcurrentHashMap<>();
 
     public FlightSearchService(RestTemplate restTemplate, ObjectMapper objectMapper,
                                AmadeusConfig amadeusConfig, AmadeusAuthService authService,
@@ -37,7 +40,6 @@ public class FlightSearchService {
         this.airlineService = airlineService;
     }
 
-
     @Cacheable(value = "flightSearchCache", key = "#request.toString()")
     public List<FlightSearchResponse> searchFlights(FlightSearchRequest request) {
         String token = authService.getAccessToken();
@@ -49,18 +51,11 @@ public class FlightSearchService {
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         try {
-            ResponseEntity<String> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    entity,
-                    String.class
-            );
-
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             JsonNode root = objectMapper.readTree(response.getBody());
             List<FlightSearchResponse> results = parseFlightResults(root, request);
             sortFlightResults(results, request.getSortBy(), request.getSortOrder());
             return results;
-
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch or parse flight search response: " + e.getMessage(), e);
         }
@@ -122,6 +117,10 @@ public class FlightSearchService {
                 double total = Double.parseDouble(pricePerTraveler) * request.getAdults();
                 String totalPrice = String.format("%.2f", total);
 
+                // Generate UUID and cache full offer
+                UUID uuid = UUID.randomUUID();
+                flightDetailsCache.put(uuid, offer);
+
                 FlightSearchResponse flight = new FlightSearchResponse(
                         departureTime, arrivalTime,
                         departureName, departureAirportCode,
@@ -130,7 +129,8 @@ public class FlightSearchService {
                         operatingCode.equals(airlineCode) ? null : operatingName,
                         operatingCode.equals(airlineCode) ? null : operatingCode,
                         formattedDuration, stops,
-                        totalPrice, pricePerTraveler
+                        totalPrice, pricePerTraveler,
+                        uuid.toString()
                 );
 
                 results.add(flight);
@@ -176,4 +176,14 @@ public class FlightSearchService {
 
         results.sort(comparator);
     }
+
+    public Optional<FlightDetailsResponse> getFlightDetailsByUUID(UUID uuid) {
+        JsonNode offer = flightDetailsCache.get(uuid);
+        if (offer == null) {
+            return Optional.empty();
+        }
+        FlightDetailService mapper = new FlightDetailService(airportService, airlineService);
+        return Optional.of(mapper.mapToFlightDetailsResponse(offer));
+    }
+
 }

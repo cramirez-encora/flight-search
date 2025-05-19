@@ -2,7 +2,7 @@ package com.flightsearch.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+//@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FlightSearchResponse {
     private String departureTime;
     private String arrivalTime;
@@ -18,6 +18,7 @@ public class FlightSearchResponse {
     private int stops;
     private String totalPrice;
     private String pricePerTraveler;
+    private String uuid;
 
     public FlightSearchResponse() {}
 
@@ -27,7 +28,7 @@ public class FlightSearchResponse {
                                 String airlineName, String airlineCode,
                                 String operatingAirlineName, String operatingAirlineCode,
                                 String duration, int stops,
-                                String totalPrice, String pricePerTraveler) {
+                                String totalPrice, String pricePerTraveler, String uuid) {
         this.departureTime = departureTime;
         this.arrivalTime = arrivalTime;
         this.departureAirportName = departureAirportName;
@@ -42,6 +43,7 @@ public class FlightSearchResponse {
         this.stops = stops;
         this.totalPrice = totalPrice;
         this.pricePerTraveler = pricePerTraveler;
+        this.uuid = uuid;
     }
 
     public String getDepartureTime() {
@@ -140,6 +142,12 @@ public class FlightSearchResponse {
     }
     public void setPricePerTraveler(String pricePerTraveler) {
         this.pricePerTraveler = pricePerTraveler;
+    }
+    public String getUuid() {
+        return uuid;
+    }
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 }
 
