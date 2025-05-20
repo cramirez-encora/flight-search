@@ -53,9 +53,7 @@ public class FlightSearchService {
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             JsonNode root = objectMapper.readTree(response.getBody());
-            List<FlightSearchResponse> results = parseFlightResults(root, request);
-            sortFlightResults(results, request.getSortBy(), request.getSortOrder());
-            return results;
+            return parseFlightResults(root, request);
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch or parse flight search response: " + e.getMessage(), e);
         }
@@ -72,7 +70,6 @@ public class FlightSearchService {
         sb.append("&adults=").append(request.getAdults());
         sb.append("&nonStop=").append(request.isNonStop());
         sb.append("&currencyCode=").append(request.getCurrencyCode());
-        sb.append("&max=10");
         return sb.toString();
     }
 
@@ -161,21 +158,6 @@ public class FlightSearchService {
         return minutes;
     }
 
-    private void sortFlightResults(List<FlightSearchResponse> results, String sortBy, String sortOrder) {
-        Comparator<FlightSearchResponse> comparator;
-
-        if ("duration".equalsIgnoreCase(sortBy)) {
-            comparator = Comparator.comparing(f -> parseDurationToMinutes(f.getDuration()));
-        } else {
-            comparator = Comparator.comparing(f -> new BigDecimal(f.getTotalPrice()));
-        }
-
-        if ("desc".equalsIgnoreCase(sortOrder)) {
-            comparator = comparator.reversed();
-        }
-
-        results.sort(comparator);
-    }
 
     public Optional<FlightDetailsResponse> getFlightDetailsByUUID(UUID uuid) {
         JsonNode offer = flightDetailsCache.get(uuid);
