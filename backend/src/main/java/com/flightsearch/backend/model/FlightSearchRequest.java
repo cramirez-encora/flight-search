@@ -26,9 +26,6 @@ public class FlightSearchRequest {
 
     private boolean nonStop;
 
-    private String sortBy;
-
-    private String sortOrder;
 
     // Constructors, Getters, Setters
     public FlightSearchRequest() {}
@@ -42,8 +39,6 @@ public class FlightSearchRequest {
         this.adults = adults;
         this.currencyCode = currencyCode;
         this.nonStop = nonStop;
-        this.sortBy = sortBy;
-        this.sortOrder = sortOrder;
     }
 
     @Override
@@ -54,9 +49,7 @@ public class FlightSearchRequest {
                 (returnDate != null ? returnDate : "null") + "-" +
                 adults + "-" +
                 nonStop + "-" +
-                currencyCode + "-" +
-                sortBy + "-" +
-                sortOrder;
+                currencyCode;
     }
     @Override
     public boolean equals(Object o) {
@@ -69,15 +62,13 @@ public class FlightSearchRequest {
                 Objects.equals(destinationLocationCode, that.destinationLocationCode) &&
                 Objects.equals(departureDate, that.departureDate) &&
                 Objects.equals(returnDate, that.returnDate) &&
-                Objects.equals(currencyCode, that.currencyCode) &&
-                Objects.equals(sortBy, that.sortBy) &&
-                Objects.equals(sortOrder, that.sortOrder);
+                Objects.equals(currencyCode, that.currencyCode);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(originLocationCode, destinationLocationCode, departureDate, returnDate,
-                adults, nonStop, currencyCode, sortBy, sortOrder);
+                adults, nonStop, currencyCode);
     }
 
 
@@ -137,16 +128,5 @@ public class FlightSearchRequest {
 
     public void setNonStop(boolean nonStop) {
         this.nonStop = nonStop;
-    }
-
-    public String getSortBy() {
-        return sortBy;
-    }
-    public void setSortBy(String sortBy) {
-        this.sortBy = sortBy;
-    }
-
-    public String getSortOrder() {
-        return sortOrder;
     }
 }
