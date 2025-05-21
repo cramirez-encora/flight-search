@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/select';
 import { AirportSearchInput } from '@/components/AirportSearchInput';
 import { useFlightSearchStore } from '@/store/useFlightSearchStore';
+import {useFlightStore} from "@/store/useFlightStore";
+import { useNavigate } from 'react-router-dom';
 
 export const SearchForm = () => {
     const {
@@ -19,13 +21,16 @@ export const SearchForm = () => {
         destination,
         departureDate,
         returnDate,
-        currency,
+        currencyCode,
         adults,
         nonStop,
         setField,
     } = useFlightSearchStore();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const setResults = useFlightStore((state) => state.setResults);
+    const navigate = useNavigate();
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         const requestPayload = {
@@ -33,12 +38,35 @@ export const SearchForm = () => {
             destinationLocationCode: destination?.iataCode || "",
             departureDate,
             returnDate,
-            currency,
             adults,
+            currencyCode,
             nonStop,
         };
 
-        console.log("Flight search request payload:", requestPayload);
+        console.log("Flight search payload as JSON:", JSON.stringify(requestPayload, null, 2));
+
+        try {
+            const res = await fetch('/api/flights/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestPayload),
+            });
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Request failed with status ${res.status}: ${errorText}`);
+            }
+
+            const data = await res.json();
+            console.log("Flight search response:", data);
+
+            setResults(data);
+            navigate('/results');
+        } catch (error) {
+            console.error('Error during flight search:', error);
+        }
     };
 
     return (
@@ -69,8 +97,8 @@ export const SearchForm = () => {
                 <div>
                     <Label>Currency</Label>
                     <Select
-                        value={currency}
-                        onValueChange={(v) => setField('currency', v as any)}
+                        value={currencyCode}
+                        onValueChange={(v) => setField('currencyCode', v as any)}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Select currency" />
@@ -101,8 +129,6 @@ export const SearchForm = () => {
                 />
                 <Label htmlFor="nonStop">Non-stop flights only</Label>
             </div>
-
-
 
             <Button type="submit" className="w-full">
                 Search Flights
