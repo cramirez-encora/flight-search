@@ -18,6 +18,7 @@ export const ResultsPage = () => {
 
     return (
         <div className="max-w-4xl mx-auto py-8 space-y-4">
+            <Button onClick={() => navigate('/')} variant={"outline"} className="border-pink-600 hover:bg-pink-700 hover:text-white ">Return to Search</Button>
             <h2 className="text-2xl font-bold mb-6">Flight Results</h2>
 
             {results.map((flight) => (

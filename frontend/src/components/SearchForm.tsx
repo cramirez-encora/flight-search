@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {PinkDatePicker} from "@/components/ui/datepicker.tsx";
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -75,25 +76,29 @@ export const SearchForm = () => {
             <AirportSearchInput label="Arrival Airport" type="destination" />
 
             <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <Label>Departure Date</Label>
-                    <Input
-                        type="date"
-                        value={departureDate}
-                        onChange={(e) => setField('departureDate', e.target.value)}
-                    />
-                </div>
-                <div>
-                    <Label>Return Date</Label>
-                    <Input
-                        type="date"
-                        value={returnDate}
-                        onChange={(e) => setField('returnDate', e.target.value)}
-                    />
-                </div>
+                <PinkDatePicker
+                    label="Departure Date"
+                    date={departureDate}
+                    onChange={(value) => setField("departureDate", value)}
+                />
+                <PinkDatePicker
+                    label="Return Date"
+                    date={returnDate}
+                    onChange={(value) => setField("returnDate", value)}
+                />
             </div>
 
+
             <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <Label>Adults</Label>
+                    <Input
+                        type="number"
+                        min={1}
+                        value={adults}
+                        onChange={(e) => setField('adults', parseInt(e.target.value))}
+                    />
+                </div>
                 <div>
                     <Label>Currency</Label>
                     <Select
@@ -110,27 +115,20 @@ export const SearchForm = () => {
                         </SelectContent>
                     </Select>
                 </div>
-                <div>
-                    <Label>Adults</Label>
-                    <Input
-                        type="number"
-                        min={1}
-                        value={adults}
-                        onChange={(e) => setField('adults', parseInt(e.target.value))}
-                    />
-                </div>
             </div>
 
             <div className="flex items-center space-x-2">
                 <Checkbox
                     id="nonStop"
+                    variant="pink"
                     checked={nonStop}
                     onCheckedChange={(checked) => setField('nonStop', Boolean(checked))}
                 />
+
                 <Label htmlFor="nonStop">Non-stop flights only</Label>
             </div>
 
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" variant={"pink"}>
                 Search Flights
             </Button>
         </form>
