@@ -44,8 +44,6 @@ export const SearchForm = () => {
             nonStop,
         };
 
-        console.log("Flight search payload as JSON:", JSON.stringify(requestPayload, null, 2));
-
         try {
             const res = await fetch('/api/flights/search', {
                 method: 'POST',
@@ -61,10 +59,10 @@ export const SearchForm = () => {
             }
 
             const data = await res.json();
-            console.log("Flight search response:", data);
 
             setResults(data);
             navigate('/results');
+
         } catch (error) {
             console.error('Error during flight search:', error);
         }
