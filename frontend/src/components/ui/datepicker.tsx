@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label'
 
 function parseLocalDate(dateString: string): Date {
     const [year, month, day] = dateString.split('-').map(Number);
-    return new Date(year, month - 1, day); // ✅ This avoids UTC shift
+    return new Date(year, month - 1, day);
 }
 
 interface PinkDatePickerProps {

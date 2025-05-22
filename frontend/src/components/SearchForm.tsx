@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/select';
 import { AirportSearchInput } from '@/components/AirportSearchInput';
 import { useFlightSearchStore } from '@/store/useFlightSearchStore';
+import {useFlightStore} from "@/store/useFlightStore";
+import { useNavigate } from 'react-router-dom';
 
 export const SearchForm = () => {
     const {
@@ -26,6 +28,8 @@ export const SearchForm = () => {
         setField,
     } = useFlightSearchStore();
 
+    const setResults = useFlightStore((state) => state.setResults);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,8 +43,6 @@ export const SearchForm = () => {
             currencyCode,
             nonStop,
         };
-
-        console.log("Flight search payload as JSON:", JSON.stringify(requestPayload, null, 2));
 
         try {
             const res = await fetch('/api/flights/search', {
@@ -57,7 +59,9 @@ export const SearchForm = () => {
             }
 
             const data = await res.json();
-            console.log("Flight search response:", data);
+
+            setResults(data);
+            navigate('/results');
 
         } catch (error) {
             console.error('Error during flight search:', error);
