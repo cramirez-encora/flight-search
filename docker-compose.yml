@@ -1,0 +1,22 @@
+services:
+  backend:
+    image: flights-api
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: flights-api
+    ports:
+      - "8080:8080"
+    environment:
+      - AMADEUS_API_KEY=${AMADEUS_API_KEY}
+      - AMADEUS_API_SECRET=${AMADEUS_API_SECRET}
+    env_file:
+      - .env
+  frontend:
+    image: flight-search-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: flight-search-frontend
+    ports:
+      - "3000:80"

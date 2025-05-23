@@ -1,6 +1,10 @@
 # General
 .DS_Store
 .env
+# .gitignore
+Zscaler.pem
+backend/zscaler.crt
+
 
 # Backend
 HELP.md
