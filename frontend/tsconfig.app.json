@@ -8,6 +8,7 @@
     "skipLibCheck": true,
 
     /* For using Shadcn*/
+    "types": ["vitest/globals"],
     "baseUrl": ".",
     "paths": {
       "@/*": [
@@ -31,5 +32,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src", "vite.config.ts", "tests"]
 }

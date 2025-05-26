@@ -103,13 +103,13 @@ export const SearchForm = () => {
                         value={currencyCode}
                         onValueChange={(v) => setField('currencyCode', v as any)}
                     >
-                        <SelectTrigger>
+                        <SelectTrigger data-testid="currency-select-trigger">
                             <SelectValue placeholder="Select currency" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="USD">USD</SelectItem>
-                            <SelectItem value="MXN">MXN</SelectItem>
-                            <SelectItem value="EUR">EUR</SelectItem>
+                            <SelectItem data-testid="currency-option-mxn" value="MXN">MXN</SelectItem>
+                            <SelectItem data-testid="currency-option-usd" value="USD">USD</SelectItem>
+                            <SelectItem data-testid="currency-option-eur" value="EUR">EUR</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
