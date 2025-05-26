@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,10 +13,10 @@ interface Amenity {
 interface Segment {
     departureTime: string;
     arrivalTime: string;
-    departureAirport: string;
-    departureIata: string;
-    arrivalAirport: string;
-    arrivalIata: string;
+    departureAirportCode: string;
+    departureAirportName: string;
+    arrivalAirportCode: string;
+    arrivalAirportName: string;
     airlineCode: string;
     airlineName: string;
     flightNumber: string;
@@ -60,6 +60,8 @@ export const FlightDetailsPage = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
+        if (!uuid) return;
+
         const fetchDetails = async () => {
             try {
                 const res = await fetch(`/api/flights/details/${uuid}`);
@@ -72,22 +74,27 @@ export const FlightDetailsPage = () => {
                 setLoading(false);
             }
         };
+
         fetchDetails();
     }, [uuid]);
 
     const formatTime = (iso: string) => format(parseISO(iso), 'yyyy-MM-dd HH:mm');
 
+    if (!uuid) return <Navigate to="/" />;
+
     if (loading) return <p className="text-center mt-10">Loading...</p>;
-    if (error || !data)
+
+    if (error || !data) {
         return (
             <div className="text-center mt-10">
                 <p className="text-red-600">{error}</p>
                 <Button onClick={() => navigate('/')}>Back to Search</Button>
             </div>
         );
+    }
 
     return (
-        <div className="max-w-7xl mx-auto py-8 px-4 ">
+        <div className="max-w-7xl mx-auto py-8 px-4">
             <Button
                 onClick={() => navigate(-1)}
                 variant="outline"
@@ -96,9 +103,7 @@ export const FlightDetailsPage = () => {
                 {"<-"} Back to Results
             </Button>
 
-            <div className="flex text-3xl font-extrabold justify-center mb-8">
-                Flight Details
-            </div>
+            <div className="flex text-3xl font-extrabold justify-center mb-8">Flight Details</div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-2 space-y-4">
@@ -112,24 +117,22 @@ export const FlightDetailsPage = () => {
                                     </div>
                                     <div className="text-lg">
                                         <span className="font-semibold">
-                                            {segment.departureAirport} ({segment.departureIata})
-                                        </span>{' '} → {' '}
+                                            {segment.departureAirportName} ({segment.departureAirportCode})
+                                        </span>{" "}
+                                        →{" "}
                                         <span className="font-semibold">
-                                            {segment.arrivalAirport} ({segment.arrivalIata})
+                                            {segment.arrivalAirportName} ({segment.arrivalAirportCode})
                                         </span>
                                     </div>
                                     <div className="text-md text-gray-700 mt-6">
                                         <span className="font-semibold text-pink-600">{segment.airlineName}</span> ({segment.airlineCode})
                                         <div>
-                                            <span className={"text-black font-semibold"}>Flight number: </span> {segment.flightNumber}
+                                            <span className="text-black font-semibold">Flight number:</span> {segment.flightNumber}
                                         </div>
                                         {segment.operatingAirlineName && (
-                                            <>
-                                                {' '}
-                                                <span className="italic">
+                                            <span className="italic">
                                                 operated by {segment.operatingAirlineName} ({segment.operatingAirlineCode})
-                                                </span>
-                                            </>
+                                            </span>
                                         )}
                                     </div>
                                     <div>
@@ -137,16 +140,16 @@ export const FlightDetailsPage = () => {
                                     </div>
                                 </div>
 
-                                <div className="md:w-1/3 border p-3 rounded space-y-2 border-pink-300 bg-pink-50 break-words ">
+                                <div className="md:w-1/3 border p-3 rounded space-y-2 border-pink-300 bg-pink-50 break-words">
                                     <div className="font-semibold text-pink-600">Traveler Fare Details</div>
                                     <div>Cabin: <span className="font-medium">{segment.cabin}</span></div>
                                     <div>Class: <span className="font-medium">{segment.travelClass}</span></div>
                                     <div>
-                                        <div >Amenities:</div>
+                                        <div>Amenities:</div>
                                         <div className="flex flex-wrap gap-2">
                                             {segment.amenities.map((amenity, i) => (
                                                 <Badge
-                                                    key={i}
+                                                    key={amenity.name + i}
                                                     variant="outline"
                                                     className="bg-white text-black border border-pink-300 text-sm font-normal px-3 py-1 leading-snug break-words whitespace-normal min-h-[2.25rem] max-w-xs w-full sm:w-fit"
                                                 >
@@ -159,21 +162,43 @@ export const FlightDetailsPage = () => {
                                                 </Badge>
                                             ))}
                                         </div>
-
-
                                     </div>
                                 </div>
                             </Card>
 
-                            {index < data.layovers.length && (
-                                <div className="text-center italic text-black py-2 font-bold">
-                                    ✈️ Layover at {data.layovers[index].airportName} ({data.layovers[index].airportCode}) — {data.layovers[index].duration}
-                                </div>
-                            )}
+                            {index < data.segments.length - 1 && (() => {
+                                const currentArrival = parseISO(data.segments[index].arrivalTime);
+                                const nextDeparture = parseISO(data.segments[index + 1].departureTime);
+
+
+                                if (currentArrival >= nextDeparture) {
+                                    return (
+                                        <div className="text-center italic text-red-600 font-semibold py-2">
+                                            ⚠️ Warning: Overlapping or invalid layover timing detected!
+                                        </div>
+                                    );
+                                }
+
+                                const layoverMinutes = Math.round((nextDeparture.getTime() - currentArrival.getTime()) / 60000);
+                                const formatLayover = (minutes: number) => {
+                                    const h = Math.floor(minutes / 60);
+                                    const m = minutes % 60;
+                                    return `${h > 0 ? `${h}h ` : ''}${m}m`;
+                                };
+
+                                const airportName = data.segments[index].arrivalAirportName;
+                                const airportCode = data.segments[index].arrivalAirportCode;
+
+                                return (
+                                    <div className="text-center italic text-black py-2 font-bold">
+                                        ✈️ Layover at {airportName} ({airportCode}) — {formatLayover(layoverMinutes)}
+                                    </div>
+                                );
+                            })()}
+
                         </div>
                     ))}
                 </div>
-
 
                 <div className="md:col-span-1 space-y-4">
                     <Card className="p-4 space-y-2 border-pink-200 shadow-sm bg-pink-50/20">

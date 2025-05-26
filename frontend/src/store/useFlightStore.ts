@@ -16,6 +16,12 @@ export interface FlightSearchResponse {
     totalPrice: string;
     pricePerTraveler: string;
     uuid: string;
+
+    // Optional return fields for round-trip
+    returnDepartureTime?: string;
+    returnArrivalTime?: string;
+    returnDuration?: string;
+    returnStops?: number;
 }
 
 interface FlightStore {

@@ -26,30 +26,53 @@ public class FlightDetailService {
         List<FlightSegmentDetail> segmentDetails = new ArrayList<>();
         List<LayoverDetail> layoverDetails = new ArrayList<>();
 
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+
         JsonNode itineraries = offer.get("itineraries");
         for (JsonNode itinerary : itineraries) {
             JsonNode segments = itinerary.get("segments");
+
             for (int i = 0; i < segments.size(); i++) {
                 JsonNode segment = segments.get(i);
                 FlightSegmentDetail segmentDetail = new FlightSegmentDetail();
 
+                // Times
                 String departureTimeStr = segment.get("departure").get("at").asText();
                 String arrivalTimeStr = segment.get("arrival").get("at").asText();
-
                 segmentDetail.setDepartureTime(departureTimeStr);
                 segmentDetail.setArrivalTime(arrivalTimeStr);
 
+                // === Departure Airport ===
+                String departureAirportCode = segment.get("departure").get("iataCode").asText();
+                segmentDetail.setDepartureAirportCode(departureAirportCode);
+                segmentDetail.setDepartureAirportName(
+                        airportService.getAirportByIATACode(departureAirportCode)
+                                .map(AirportResponse::getName)
+                                .orElse(null)
+                );
+
+                // === Arrival Airport ===
+                String arrivalAirportCode = segment.get("arrival").get("iataCode").asText();
+                segmentDetail.setArrivalAirportCode(arrivalAirportCode);
+                segmentDetail.setArrivalAirportName(
+                        airportService.getAirportByIATACode(arrivalAirportCode)
+                                .map(AirportResponse::getName)
+                                .orElse(null)
+                );
+
+                // Airline & Flight Info
                 String airlineCode = segment.get("carrierCode").asText();
                 segmentDetail.setAirlineCode(airlineCode);
                 segmentDetail.setAirlineName(airlineService.getAirlineName(airlineCode).orElse(airlineCode));
-
                 segmentDetail.setFlightNumber(segment.get("number").asText());
 
                 if (segment.has("operating")) {
                     String operatingCode = segment.get("operating").get("carrierCode").asText();
                     if (!operatingCode.equals(airlineCode)) {
                         segmentDetail.setOperatingAirlineCode(operatingCode);
-                        segmentDetail.setOperatingAirlineName(airlineService.getAirlineName(operatingCode).orElse(operatingCode));
+                        segmentDetail.setOperatingAirlineName(
+                                airlineService.getAirlineName(operatingCode).orElse(operatingCode)
+                        );
                     }
                 }
 
@@ -72,26 +95,25 @@ public class FlightDetailService {
 
                 segmentDetails.add(segmentDetail);
 
+                // === Layover Calculation ===
                 if (i > 0) {
                     JsonNode prevSegment = segments.get(i - 1);
-                    String prevArrivalTimeStr = prevSegment.get("arrival").get("at").asText();
-                    String nextDepartureTimeStr = segment.get("departure").get("at").asText();
+                    String prevArrivalStr = prevSegment.get("arrival").get("at").asText();
+                    String currDepartureStr = segment.get("departure").get("at").asText();
 
                     try {
-                        LocalDateTime prevArrivalTime = LocalDateTime.parse(prevArrivalTimeStr);
-                        LocalDateTime nextDepartureTime = LocalDateTime.parse(nextDepartureTimeStr);
-                        Duration layoverDuration = Duration.between(prevArrivalTime, nextDepartureTime);
+                        LocalDateTime prevArrivalTime = LocalDateTime.parse(prevArrivalStr, formatter);
+                        LocalDateTime currDepartureTime = LocalDateTime.parse(currDepartureStr, formatter);
+                        Duration layoverDuration = Duration.between(prevArrivalTime, currDepartureTime);
 
-                        LayoverDetail layover = new LayoverDetail();
-                        String airportCode = segment.get("departure").get("iataCode").asText();
-                        layover.setAirportCode(airportCode);
-                        layover.setAirportName(airportService.getAirportByIATACode(airportCode)
-                                .map(AirportResponse::getName).orElse("Unknown"));
-                        layover.setDuration(formatDuration(layoverDuration));
+                        LayoverDetail layoverDetail = new LayoverDetail();
+                        layoverDetail.setAirportCode(segment.get("departure").get("iataCode").asText());
+                        layoverDetail.setDuration(formatDuration(layoverDuration));
 
-                        layoverDetails.add(layover);
+                        layoverDetails.add(layoverDetail);
                     } catch (Exception e) {
-                        // Optionally log or handle the parsing error
+                        // If there's a parsing issue, skip the layover
+                        System.err.println("Error parsing layover times: " + e.getMessage());
                     }
                 }
             }

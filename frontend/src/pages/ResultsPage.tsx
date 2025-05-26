@@ -1,8 +1,9 @@
-import {type FlightSearchResponse, useFlightStore} from '@/store/useFlightStore';
+import { type FlightSearchResponse, useFlightStore } from '@/store/useFlightStore';
 import { useNavigate } from 'react-router-dom';
-import {Label} from '@/components/ui/label';
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { FlightCard } from '@/components/FlightCard';
+import { RoundTripFlightCard } from '@/components/RoundTripFlightCard';
 import { useState } from 'react';
 import {
     Select,
@@ -71,7 +72,6 @@ export const ResultsPage = () => {
         }
     };
 
-
     return (
         <div className="max-w-4xl mx-auto py-8 space-y-4">
             <Button
@@ -87,7 +87,7 @@ export const ResultsPage = () => {
             <div className="flex items-center justify-between mb-6">
                 <div></div>
                 <div className="flex items-center gap-4 ml-auto">
-                    <Label>Sort By </Label>
+                    <Label>Sort By</Label>
                     <Select
                         value={sortBy}
                         onValueChange={(value) => {
@@ -136,9 +136,15 @@ export const ResultsPage = () => {
 
             {error && <p className="text-red-500">{error}</p>}
 
-            {results.map((flight) => (
-                <FlightCard key={flight.uuid} flight={flight} />
-            ))}
+            {results.map((flight) => {
+                const key = flight.uuid ?? crypto.randomUUID();
+                const isRoundTrip = Boolean(flight.returnDepartureTime);
+                return isRoundTrip ? (
+                    <RoundTripFlightCard key={key} flights={[flight]} />
+                ) : (
+                    <FlightCard key={key} flights={[flight]} />
+                );
+            })}
         </div>
     );
 };

@@ -4,10 +4,10 @@ import type { FlightSearchResponse } from '@/store/useFlightStore';
 import { useNavigate } from 'react-router-dom';
 
 interface Props {
-    flights: FlightSearchResponse[]; // Accepts both departure and return segments
+    flights: FlightSearchResponse[]; // [departure, return]
 }
 
-export function FlightCard({ flights }: Props) {
+export function RoundTripFlightCard({ flights }: Props) {
     const navigate = useNavigate();
     const [departure, returnFlight] = flights;
 
@@ -50,7 +50,6 @@ export function FlightCard({ flights }: Props) {
                             <div className="font-bold text-sm">{departure.totalPrice}</div>
                             <div className="text-xs text-muted-foreground">total</div>
                         </div>
-
                         <div>
                             <div className="font-bold text-sm">{departure.pricePerTraveler}</div>
                             <div className="text-xs text-muted-foreground">per Traveler</div>
@@ -95,7 +94,6 @@ export function FlightCard({ flights }: Props) {
                                 <div className="font-bold text-sm">{returnFlight.totalPrice}</div>
                                 <div className="text-xs text-muted-foreground">total</div>
                             </div>
-
                             <div>
                                 <div className="font-bold text-sm">{returnFlight.pricePerTraveler}</div>
                                 <div className="text-xs text-muted-foreground">per Traveler</div>
@@ -110,7 +108,7 @@ export function FlightCard({ flights }: Props) {
                     onClick={() => navigate(`/details/${departure.uuid}`)}
                     variant="pink"
                 >
-                    View Details
+                    View Details Round
                 </Button>
             </div>
         </Card>

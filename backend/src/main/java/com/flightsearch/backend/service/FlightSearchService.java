@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Service
 public class FlightSearchService {
@@ -28,6 +29,7 @@ public class FlightSearchService {
     private final AirlineService airlineService;
 
     private final Map<UUID, JsonNode> flightDetailsCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, AirportResponse> airportCache = new ConcurrentHashMap<>();
 
     public FlightSearchService(RestTemplate restTemplate, ObjectMapper objectMapper,
                                AmadeusConfig amadeusConfig, AmadeusAuthService authService,
@@ -70,6 +72,7 @@ public class FlightSearchService {
         sb.append("&adults=").append(request.getAdults());
         sb.append("&nonStop=").append(request.isNonStop());
         sb.append("&currencyCode=").append(request.getCurrencyCode());
+        sb.append("&max=10");
         return sb.toString();
     }
 
@@ -80,41 +83,57 @@ public class FlightSearchService {
 
         for (JsonNode offer : data) {
             try {
-                JsonNode itinerary = offer.get("itineraries").get(0);
-                JsonNode segments = itinerary.get("segments");
-                JsonNode firstSegment = segments.get(0);
-                JsonNode lastSegment = segments.get(segments.size() - 1);
+                JsonNode itineraries = offer.get("itineraries");
+                if (request.getReturnDate() == null && itineraries.size() > 1) {
+                    continue;
+                }
 
-                String departureTime = firstSegment.get("departure").get("at").asText();
-                String arrivalTime = lastSegment.get("arrival").get("at").asText();
+                JsonNode outboundItinerary = itineraries.get(0);
+                JsonNode outboundSegments = outboundItinerary.get("segments");
+                JsonNode outboundFirstSegment = outboundSegments.get(0);
+                JsonNode outboundLastSegment = outboundSegments.get(outboundSegments.size() - 1);
 
-                String departureAirportCode = firstSegment.get("departure").get("iataCode").asText();
-                String departureName = airportService.getAirportByIATACode(departureAirportCode)
-                        .map(AirportResponse::getName)
-                        .orElse("Unknown");
+                String departureTime = outboundFirstSegment.get("departure").get("at").asText();
+                String arrivalTime = outboundLastSegment.get("arrival").get("at").asText();
 
-                String arrivalAirportCode = lastSegment.get("arrival").get("iataCode").asText();
-                String arrivalName = airportService.getAirportByIATACode(arrivalAirportCode)
-                        .map(AirportResponse::getName)
-                        .orElse("Unknown");
+                String departureAirportCode = outboundFirstSegment.get("departure").get("iataCode").asText();
+                String arrivalAirportCode = outboundLastSegment.get("arrival").get("iataCode").asText();
 
-                String airlineCode = firstSegment.get("carrierCode").asText();
+                String departureName = getAirportInfo(departureAirportCode).getName();
+                String arrivalName = getAirportInfo(arrivalAirportCode).getName();
+
+                String airlineCode = outboundFirstSegment.get("carrierCode").asText();
                 String airlineName = airlineService.getAirlineName(airlineCode).orElse(airlineCode);
 
-                String operatingCode = firstSegment.has("operating") ?
-                        firstSegment.get("operating").get("carrierCode").asText() : airlineCode;
-
+                String operatingCode = outboundFirstSegment.has("operating") ?
+                        outboundFirstSegment.get("operating").get("carrierCode").asText() : airlineCode;
                 String operatingName = airlineService.getAirlineName(operatingCode).orElse(operatingCode);
 
-                String isoDuration = itinerary.get("duration").asText();
-                String formattedDuration = formatDuration(isoDuration);
-                int stops = segments.size() - 1;
+                String formattedDuration = formatDuration(outboundItinerary.get("duration").asText());
+                int outboundStops = outboundSegments.size() - 1;
+
+                String returnDepartureTime = null;
+                String returnArrivalTime = null;
+                String returnDuration = null;
+                int returnStops = 0;
+
+                if (request.getReturnDate() != null
+                        && itineraries.size() > 1) {
+                    JsonNode returnItinerary = itineraries.get(1);
+                    JsonNode returnSegments = returnItinerary.get("segments");
+                    JsonNode returnFirstSegment = returnSegments.get(0);
+                    JsonNode returnLastSegment = returnSegments.get(returnSegments.size() - 1);
+
+                    returnDepartureTime = returnFirstSegment.get("departure").get("at").asText();
+                    returnArrivalTime = returnLastSegment.get("arrival").get("at").asText();
+                    returnDuration = formatDuration(returnItinerary.get("duration").asText());
+                    returnStops = returnSegments.size() - 1;
+                }
 
                 String pricePerTraveler = offer.get("price").get("total").asText();
                 double total = Double.parseDouble(pricePerTraveler) * request.getAdults();
                 String totalPrice = String.format("%.2f", total);
 
-                // Generate UUID and cache full offer
                 UUID uuid = UUID.randomUUID();
                 flightDetailsCache.put(uuid, offer);
 
@@ -125,9 +144,11 @@ public class FlightSearchService {
                         airlineName, airlineCode,
                         operatingCode.equals(airlineCode) ? null : operatingName,
                         operatingCode.equals(airlineCode) ? null : operatingCode,
-                        formattedDuration, stops,
+                        formattedDuration, outboundStops,
                         totalPrice, pricePerTraveler,
-                        uuid.toString()
+                        uuid.toString(),
+                        returnDepartureTime, returnArrivalTime,
+                        returnDuration, returnStops
                 );
 
                 results.add(flight);
@@ -137,6 +158,14 @@ public class FlightSearchService {
         }
         return results;
     }
+
+    private AirportResponse getAirportInfo(String iataCode) {
+        return airportCache.computeIfAbsent(iataCode, code ->
+                airportService.getAirportByIATACode(code)
+                        .orElse(new AirportResponse(null, code, null, null))
+        );
+    }
+
 
     private String formatDuration(String isoDuration) {
         Duration duration = Duration.parse(isoDuration);
@@ -158,7 +187,6 @@ public class FlightSearchService {
         return minutes;
     }
 
-
     public Optional<FlightDetailsResponse> getFlightDetailsByUUID(UUID uuid) {
         JsonNode offer = flightDetailsCache.get(uuid);
         if (offer == null) {
@@ -167,5 +195,4 @@ public class FlightSearchService {
         FlightDetailService mapper = new FlightDetailService(airportService, airlineService);
         return Optional.of(mapper.mapToFlightDetailsResponse(offer));
     }
-
 }
