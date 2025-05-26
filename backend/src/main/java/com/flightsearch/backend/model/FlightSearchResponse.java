@@ -2,7 +2,7 @@ package com.flightsearch.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-//@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FlightSearchResponse {
     private String departureTime;
     private String arrivalTime;
@@ -20,6 +20,12 @@ public class FlightSearchResponse {
     private String pricePerTraveler;
     private String uuid;
 
+    // Return flight fields (for round-trip support)
+    private String returnDepartureTime;
+    private String returnArrivalTime;
+    private String returnDuration;
+    private Integer returnStops;
+
     public FlightSearchResponse() {}
 
     public FlightSearchResponse(String departureTime, String arrivalTime,
@@ -28,7 +34,9 @@ public class FlightSearchResponse {
                                 String airlineName, String airlineCode,
                                 String operatingAirlineName, String operatingAirlineCode,
                                 String duration, int stops,
-                                String totalPrice, String pricePerTraveler, String uuid) {
+                                String totalPrice, String pricePerTraveler, String uuid,
+                                String returnDepartureTime, String returnArrivalTime,
+                                String returnDuration, Integer returnStops) {
         this.departureTime = departureTime;
         this.arrivalTime = arrivalTime;
         this.departureAirportName = departureAirportName;
@@ -44,7 +52,13 @@ public class FlightSearchResponse {
         this.totalPrice = totalPrice;
         this.pricePerTraveler = pricePerTraveler;
         this.uuid = uuid;
+        this.returnDepartureTime = returnDepartureTime;
+        this.returnArrivalTime = returnArrivalTime;
+        this.returnDuration = returnDuration;
+        this.returnStops = returnStops;
     }
+
+    // Getters and Setters for all fields (including return flight fields)
 
     public String getDepartureTime() {
         return departureTime;
@@ -143,11 +157,39 @@ public class FlightSearchResponse {
     public void setPricePerTraveler(String pricePerTraveler) {
         this.pricePerTraveler = pricePerTraveler;
     }
+
     public String getUuid() {
         return uuid;
     }
     public void setUuid(String uuid) {
         this.uuid = uuid;
     }
-}
 
+    public String getReturnDepartureTime() {
+        return returnDepartureTime;
+    }
+    public void setReturnDepartureTime(String returnDepartureTime) {
+        this.returnDepartureTime = returnDepartureTime;
+    }
+
+    public String getReturnArrivalTime() {
+        return returnArrivalTime;
+    }
+    public void setReturnArrivalTime(String returnArrivalTime) {
+        this.returnArrivalTime = returnArrivalTime;
+    }
+
+    public String getReturnDuration() {
+        return returnDuration;
+    }
+    public void setReturnDuration(String returnDuration) {
+        this.returnDuration = returnDuration;
+    }
+
+    public Integer getReturnStops() {
+        return returnStops;
+    }
+    public void setReturnStops(Integer returnStops) {
+        this.returnStops = returnStops;
+    }
+}

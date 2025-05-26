@@ -5,6 +5,12 @@ import java.util.List;
 public class FlightSegmentDetail {
     private String departureTime;
     private String arrivalTime;
+
+    private String departureAirportCode;
+    private String departureAirportName;
+    private String arrivalAirportCode;
+    private String arrivalAirportName;
+
     private String airlineCode;
     private String airlineName;
     private String flightNumber;
@@ -27,6 +33,34 @@ public class FlightSegmentDetail {
     }
     public void setArrivalTime(String arrivalTime) {
         this.arrivalTime = arrivalTime;
+    }
+
+    public String getDepartureAirportCode() {
+        return departureAirportCode;
+    }
+    public void setDepartureAirportCode(String departureAirportCode) {
+        this.departureAirportCode = departureAirportCode;
+    }
+
+    public String getDepartureAirportName() {
+        return departureAirportName;
+    }
+    public void setDepartureAirportName(String departureAirportName) {
+        this.departureAirportName = departureAirportName;
+    }
+
+    public String getArrivalAirportCode() {
+        return arrivalAirportCode;
+    }
+    public void setArrivalAirportCode(String arrivalAirportCode) {
+        this.arrivalAirportCode = arrivalAirportCode;
+    }
+
+    public String getArrivalAirportName() {
+        return arrivalAirportName;
+    }
+    public void setArrivalAirportName(String arrivalAirportName) {
+        this.arrivalAirportName = arrivalAirportName;
     }
 
     public String getAirlineCode() {
